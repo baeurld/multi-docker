@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t drainedx/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true drainedx/react-test npm test
+
+after_success:
+  - docker build -t drainedx/multi-client ./client
+  - docker build -t drainedx/multi-nginx ./nginx
+  - docker build -t drainedx/multi-server ./server
+  - docker build -t drainedx/multi-worker ./worker 
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images to docker hub
+  - docker push drainedx/multi-client
+  - docker push drainedx/multi-nginx
+  - docker push drainedx/multi-server
+  - docker push drainedx/multi-worker
